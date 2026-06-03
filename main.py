@@ -23,40 +23,74 @@ class StyleHub:
         self.root.title("StyleHub")
 
         self.user_id = None
+        self.cart = []
+        self.wishlist = []
 
         self.login_screen()
 
+    def login_screen(self):
+        self.clear_screen()
 
-# Login Screen
-def login_screen(self):
-    self.clear_screen()
+        Label(
+            self.root,
+            text="StyleHub Login",
+            font=("Arial", 20)
+        ).pack()
 
-    Label(
-        self.root,
-        text="StyleHub Login",
-        font=("Arial", 20)
-    ).pack()
+        self.username_entry = Entry(self.root)
+        self.username_entry.pack()
 
-    self.username_entry = Entry(self.root)
-    self.username_entry.pack()
+        self.password_entry = Entry(
+            self.root,
+            show="*"
+        )
+        self.password_entry.pack()
 
-    self.password_entry = Entry(
-        self.root,
-        show="*"
-    )
-    self.password_entry.pack()
+        Button(
+            self.root,
+            text="Login",
+            command=self.login
+        ).pack()
 
-    Button(
-        self.root,
-        text="Login",
-        command=self.login
-    ).pack()
+        Button(
+            self.root,
+            text="Register",
+            command=self.register_screen
+        ).pack()
 
-    Button(
-        self.root,
-        text="Register",
-        command=self.register_screen
-    ).pack()
+    def register_screen(self):
+        ...
+
+    def register(self):
+        ...
+
+    def login(self):
+        ...
+
+    def products_screen(self):
+        ...
+
+    def add_to_cart(self, product):
+        ...
+
+    def view_cart(self):
+        ...
+
+    def add_to_wishlist(self, item):
+        ...
+
+    def checkout(self):
+        ...
+
+    def chatbot(self):
+        ...
+
+    def admin_dashboard(self):
+        ...
+
+    def clear_screen(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
 
 # Register Screen
