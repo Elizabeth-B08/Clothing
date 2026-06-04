@@ -1,612 +1,325 @@
 import tkinter as tk
-from tkinter import *
-from tkinter import messagebox
+from tkinter import ttk, messagebox
 import sqlite3
-import hashlib
+
+# -------------------------
+# Theme Colors
+# -------------------------
+BG = "#121212"
+CARD = "#1E1E1E"
+ACCENT = "#4F46E5"
 
 
-# Password Hashing
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
-
-
-# Database Connection
+# -------------------------
+# Database
+# -------------------------
 def connect_db():
     return sqlite3.connect("database.db")
 
 
-# Main Class
+def init_db():
+    conn = connect_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS products(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        category TEXT,
+        description TEXT,
+        price REAL,
+        stock INTEGER
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS orders(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        total REAL
+    )
+    """)
+
+    # Add sample products if table is empty
+    cur.execute("SELECT COUNT(*) FROM products")
+
+    if cur.fetchone()[0] == 0:
+        cur.executemany("""
+        INSERT INTO products
+        (name, category, description, price, stock)
+        VALUES (?, ?, ?, ?, ?)
+        """, [
+            ("Classic T-Shirt", "Shirts", "Soft cotton shirt", 19.99, 50),
+            ("Premium Hoodie", "Outerwear", "Warm fleece hoodie", 49.99, 25),
+            ("Slim Jeans", "Pants", "Stretch denim jeans", 59.99, 30),
+            ("Running Shoes", "Shoes", "Lightweight sneakers", 79.99, 20),
+            ("Baseball Cap", "Accessories", "Adjustable cap", 14.99, 40)
+        ])
+
+    conn.commit()
+    conn.close()
+
+
+# -------------------------
+# Main App
+# -------------------------
 class StyleHub:
 
     def __init__(self, root):
         self.root = root
-        self.root.title("Clothing App")
 
-        self.user_id = None
+        self.root.title("StyleHub")
+        self.root.geometry("1000x700")
+        self.root.configure(bg=BG)
+
         self.cart = []
-        self.wishlist = []
 
-        self.login_screen()
+        self.setup_styles()
+        self.products_screen()
 
-    def login_screen(self):
-        self.clear_screen()
+    # -------------------------
+    # Styling
+    # -------------------------
+    def setup_styles(self):
 
-        Label(
-            self.root,
-            text="StyleHub Login",
-            font=("Arial", 20)
-        ).pack()
-
-        self.username_entry = Entry(self.root)
-        self.username_entry.pack()
-
-        self.password_entry = Entry(
-            self.root,
-            show="*"
-        )
-        self.password_entry.pack()
-
-        Button(
-            self.root,
-            text="Login",
-            command=self.login
-        ).pack()
-
-        Button(
-            self.root,
-            text="Register",
-            command=self.register_screen
-        ).pack()
-
-    def register_screen(self):
-        self.clear_screen()
-
-        Label(
-            self.root,
-            text="Register",
-            font=("Arial", 20)
-        ).pack()
-
-        self.reg_user = Entry(self.root)
-        self.reg_user.pack()
-
-        self.reg_pass = Entry(
-            self.root,
-            show="*"
-        )
-        self.reg_pass.pack()
-
-        Button(
-            self.root,
-            text="Create Account",
-            command=self.register
-        ).pack()
-
-    def register(self):
-        username = self.reg_user.get()
-        password = hash_password(
-            self.reg_pass.get()
-        )
-
-        conn = connect_db()
-        cursor = conn.cursor()
+        style = ttk.Style()
 
         try:
-
-            cursor.execute("""
-                INSERT INTO users
-                (username,password)
-                VALUES (?,?)
-                """, (username, password))
-
-            conn.commit()
-
-            messagebox.showinfo(
-                "Success",
-                "Account Created"
-            )
-
-            self.login_screen()
-
+            style.theme_use("clam")
         except:
-            messagebox.showerror(
-                "Error",
-                "Username Exists"
-            )
+            pass
 
-        conn.close()
-
-    def login(self):
-        username = self.username_entry.get()
-        password = hash_password(
-            self.password_entry.get()
+        style.configure(
+            "Header.TLabel",
+            font=("Segoe UI", 24, "bold")
         )
 
-        conn = connect_db()
-        cursor = conn.cursor()
+        style.configure(
+            "TButton",
+            font=("Segoe UI", 11, "bold"),
+            padding=10
+        )
 
-        cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE username=? AND password=?
-            """, (username, password))
+        style.configure(
+            "TLabel",
+            font=("Segoe UI", 11)
+        )
 
-        user = cursor.fetchone()
+    # -------------------------
+    # Utilities
+    # -------------------------
+    def clear_screen(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
-        conn.close()
-
-        if user:
-
-            self.user_id = user[0]
-
-            self.products_screen()
-
-        else:
-
-            messagebox.showerror(
-                "Error",
-                "Invalid Login"
-            )
-
+    # -------------------------
+    # Products Screen
+    # -------------------------
     def products_screen(self):
+
         self.clear_screen()
 
-        Label(
+        header = tk.Frame(
             self.root,
-            text="Products",
-            font=("Arial", 20)
+            bg=BG
+        )
+
+        header.pack(fill="x", pady=15)
+
+        ttk.Label(
+            header,
+            text="🛍 StyleHub Store",
+            style="Header.TLabel"
         ).pack()
 
-        search = Entry(self.root)
-        search.pack()
-
-        listbox = Listbox(
-            self.root,
-            width=60
+        self.cart_label = ttk.Label(
+            header,
+            text="Cart: 0 items"
         )
 
-        listbox.pack()
+        self.cart_label.pack(pady=5)
+
+        ttk.Button(
+            header,
+            text="View Cart",
+            command=self.view_cart
+        ).pack()
+
+        self.listbox = tk.Listbox(
+            self.root,
+            bg=CARD,
+            fg="white",
+            font=("Segoe UI", 11),
+            width=80,
+            height=20,
+            selectbackground=ACCENT,
+            relief="flat"
+        )
+
+        self.listbox.pack(pady=20)
+
+        self.load_products()
+
+        ttk.Button(
+            self.root,
+            text="Add Selected To Cart",
+            command=self.add_selected_product
+        ).pack()
+
+    # -------------------------
+    # Load Products
+    # -------------------------
+    def load_products(self):
+
+        self.listbox.delete(0, tk.END)
 
         conn = connect_db()
-        cursor = conn.cursor()
+        cur = conn.cursor()
 
-        cursor.execute(
-            "SELECT * FROM products"
+        cur.execute(
+            "SELECT id, name, price FROM products"
         )
 
-        products = cursor.fetchall()
-
-        for p in products:
-            listbox.insert(
-                END,
-                f"{p[0]} | {p[1]} | ${p[4]}"
-            )
+        rows = cur.fetchall()
 
         conn.close()
 
-    def add_to_cart(self, product):
-        self.cart.append(product)
+        for row in rows:
+            self.listbox.insert(
+                tk.END,
+                f"{row[0]} | {row[1]} | ${row[2]:.2f}"
+            )
 
-        messagebox.showinfo(
-            "Cart",
-            "Item Added"
+    # -------------------------
+    # Add To Cart
+    # -------------------------
+    def add_selected_product(self):
+
+        selection = self.listbox.curselection()
+
+        if not selection:
+            messagebox.showwarning(
+                "Selection Required",
+                "Please select a product."
+            )
+            return
+
+        item = self.listbox.get(selection[0])
+
+        self.cart.append(item)
+
+        self.cart_label.config(
+            text=f"Cart: {len(self.cart)} items"
         )
 
+        messagebox.showinfo(
+            "Added",
+            "Product added to cart."
+        )
+
+    # -------------------------
+    # View Cart
+    # -------------------------
     def view_cart(self):
-        cart_window = Toplevel()
 
-        cart_window.title("Cart")
+        win = tk.Toplevel(self.root)
+
+        win.title("Shopping Cart")
+        win.geometry("500x500")
+        win.configure(bg=BG)
+
+        ttk.Label(
+            win,
+            text="Your Cart",
+            style="Header.TLabel"
+        ).pack(pady=15)
 
         total = 0
 
         for item in self.cart:
-            Label(
-                cart_window,
+
+            ttk.Label(
+                win,
                 text=item
-            ).pack()
+            ).pack(pady=3)
 
-            total += float(
-                item.split("$")[1]
+            try:
+                total += float(
+                    item.split("$")[-1]
+                )
+            except:
+                pass
+
+        ttk.Label(
+            win,
+            text=f"Total: ${total:.2f}",
+            style="Header.TLabel"
+        ).pack(pady=20)
+
+        ttk.Button(
+            win,
+            text="Checkout",
+            command=lambda: self.checkout(win)
+        ).pack(pady=10)
+
+    # -------------------------
+    # Checkout
+    # -------------------------
+    def checkout(self, cart_window):
+
+        if not self.cart:
+
+            messagebox.showwarning(
+                "Empty Cart",
+                "Your cart is empty."
             )
 
-        Label(
-            cart_window,
-            text=f"Total: ${total}"
-        ).pack()
+            return
 
-    def add_to_wishlist(self, item):
-        self.wishlist.append(item)
-
-        messagebox.showinfo(
-            "Wishlist",
-            "Added"
-        )
-
-    def checkout(self):
         total = 0
 
         for item in self.cart:
-            total += float(
-                item.split("$")[1]
-            )
+
+            try:
+                total += float(
+                    item.split("$")[-1]
+                )
+            except:
+                pass
 
         conn = connect_db()
-        cursor = conn.cursor()
+        cur = conn.cursor()
 
-        cursor.execute("""
-            INSERT INTO orders
-            (user_id,total)
-            VALUES (?,?)
-            """, (self.user_id, total))
+        cur.execute(
+            "INSERT INTO orders (total) VALUES (?)",
+            (total,)
+        )
 
         conn.commit()
         conn.close()
 
         self.cart.clear()
 
-        messagebox.showinfo(
-            "Order",
-            "Order Placed"
+        self.cart_label.config(
+            text="Cart: 0 items"
         )
-
-    def chatbot(self):
-        bot = Toplevel()
-
-        bot.title("Chatbot")
-
-        entry = Entry(bot, width=40)
-        entry.pack()
-
-        output = Label(bot, text="")
-        output.pack()
-
-        def respond():
-
-            msg = entry.get().lower()
-
-            if "return" in msg:
-
-                response = \
-                    "Returns accepted within 30 days."
-
-            elif "shipping" in msg:
-
-                response = \
-                    "Shipping takes 3-5 days."
-
-            elif "size" in msg:
-
-                response = \
-                    "Sizes range from S to XL."
-
-            else:
-
-                response = \
-                    "Please contact support."
-
-            output.config(text=response)
-
-        Button(
-            bot,
-            text="Ask",
-            command=respond
-        ).pack()
-
-    def admin_dashboard(self):
-        admin = Toplevel()
-
-        admin.title("Admin")
-
-        conn = connect_db()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "SELECT * FROM products"
-        )
-
-        products = cursor.fetchall()
-
-        for p in products:
-            Label(
-                admin,
-                text=f"{p[1]} Stock:{p[5]}"
-            ).pack()
-
-        conn.close()
-
-    def clear_screen(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
-
-
-# Register Screen
-def register_screen(self):
-    self.clear_screen()
-
-    Label(
-        self.root,
-        text="Register",
-        font=("Arial", 20)
-    ).pack()
-
-    self.reg_user = Entry(self.root)
-    self.reg_user.pack()
-
-    self.reg_pass = Entry(
-        self.root,
-        show="*"
-    )
-    self.reg_pass.pack()
-
-    Button(
-        self.root,
-        text="Create Account",
-        command=self.register
-    ).pack()
-
-
-# Register Function
-def register(self):
-    username = self.reg_user.get()
-    password = hash_password(
-        self.reg_pass.get()
-    )
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    try:
-
-        cursor.execute("""
-        INSERT INTO users
-        (username,password)
-        VALUES (?,?)
-        """, (username, password))
-
-        conn.commit()
 
         messagebox.showinfo(
-            "Success",
-            "Account Created"
+            "Order Complete",
+            f"Thank you for your purchase!\n\nTotal: ${total:.2f}"
         )
 
-        self.login_screen()
+        cart_window.destroy()
 
-    except:
-        messagebox.showerror(
-            "Error",
-            "Username Exists"
-        )
 
-    conn.close()
+# -------------------------
+# Run App
+# -------------------------
+if __name__ == "__main__":
 
+    init_db()
 
-# Login Function
-def login(self):
-    username = self.username_entry.get()
-    password = hash_password(
-        self.password_entry.get()
-    )
+    root = tk.Tk()
 
-    conn = connect_db()
-    cursor = conn.cursor()
+    app = StyleHub(root)
 
-    cursor.execute("""
-    SELECT *
-    FROM users
-    WHERE username=? AND password=?
-    """, (username, password))
-
-    user = cursor.fetchone()
-
-    conn.close()
-
-    if user:
-
-        self.user_id = user[0]
-
-        self.products_screen()
-
-    else:
-
-        messagebox.showerror(
-            "Error",
-            "Invalid Login"
-        )
-
-
-# Product Catalog
-def products_screen(self):
-    self.clear_screen()
-
-    Label(
-        self.root,
-        text="Products",
-        font=("Arial", 20)
-    ).pack()
-
-    search = Entry(self.root)
-    search.pack()
-
-    listbox = Listbox(
-        self.root,
-        width=60
-    )
-
-    listbox.pack()
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT * FROM products"
-    )
-
-    products = cursor.fetchall()
-
-    for p in products:
-        listbox.insert(
-            END,
-            f"{p[0]} | {p[1]} | ${p[4]}"
-        )
-
-    conn.close()
-
-
-# Shopping Cart
-
-
-
-def add_to_cart(self, product):
-    self.cart.append(product)
-
-    messagebox.showinfo(
-        "Cart",
-        "Item Added"
-    )
-
-
-
-def view_cart(self):
-    cart_window = Toplevel()
-
-    cart_window.title("Cart")
-
-    total = 0
-
-    for item in self.cart:
-        Label(
-            cart_window,
-            text=item
-        ).pack()
-
-        total += float(
-            item.split("$")[1]
-        )
-
-    Label(
-        cart_window,
-        text=f"Total: ${total}"
-    ).pack()
-
-
-
-def add_to_wishlist(self, item):
-    self.wishlist.append(item)
-
-    messagebox.showinfo(
-        "Wishlist",
-        "Added"
-    )
-
-
-def checkout(self):
-    total = 0
-
-    for item in self.cart:
-        total += float(
-            item.split("$")[1]
-        )
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-    INSERT INTO orders
-    (user_id,total)
-    VALUES (?,?)
-    """, (self.user_id, total))
-
-    conn.commit()
-    conn.close()
-
-    self.cart.clear()
-
-    messagebox.showinfo(
-        "Order",
-        "Order Placed"
-    )
-
-
-# Chatbot
-def chatbot(self):
-    bot = Toplevel()
-
-    bot.title("Chatbot")
-
-    entry = Entry(bot, width=40)
-    entry.pack()
-
-    output = Label(bot, text="")
-    output.pack()
-
-    def respond():
-
-        msg = entry.get().lower()
-
-        if "return" in msg:
-
-            response = \
-                "Returns accepted within 30 days."
-
-        elif "shipping" in msg:
-
-            response = \
-                "Shipping takes 3-5 days."
-
-        elif "size" in msg:
-
-            response = \
-                "Sizes range from S to XL."
-
-        else:
-
-            response = \
-                "Please contact support."
-
-        output.config(text=response)
-
-    Button(
-        bot,
-        text="Ask",
-        command=respond
-    ).pack()
-
-
-
-def admin_dashboard(self):
-    admin = Toplevel()
-
-    admin.title("Admin")
-
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT * FROM products"
-    )
-
-    products = cursor.fetchall()
-
-    for p in products:
-        Label(
-            admin,
-            text=f"{p[1]} Stock:{p[5]}"
-        ).pack()
-
-    conn.close()
-
-
-
-def clear_screen(self):
-    for widget in self.root.winfo_children():
-        widget.destroy()
-
-
-root = Tk()
-
-root.geometry("800x600")
-
-app = StyleHub(root)
-
-root.mainloop()
+    root.mainloop()
