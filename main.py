@@ -67,7 +67,7 @@ class StyleHub:
     def __init__(self, root):
         self.root = root
 
-        self.root.title("StyleHub")
+        self.root.title("Forever 21")
         self.root.geometry("1000x700")
         self.root.configure(bg=BG)
 
@@ -127,7 +127,7 @@ class StyleHub:
 
         ttk.Label(
             header,
-            text="🛍 StyleHub Store",
+            text="🛍 Forever 21 Store",
             style="Header.TLabel"
         ).pack()
 
