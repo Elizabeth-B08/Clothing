@@ -51,14 +51,16 @@ cursor.execute("SELECT COUNT(*) FROM products")
 
 if cursor.fetchone()[0] == 0:
     products = [
-        ("Nike Hoodie", "M", "Black", 79.99, 10),
-        ("Adidas Shirt", "L", "White", 34.99, 15),
-        ("Puma Shorts", "S", "Blue", 29.99, 20)
+        ("Classic T-Shirt", "Shirts", "Soft cotton shirt", 19.99, 50),
+            ("Premium Hoodie", "Outerwear", "Warm fleece hoodie", 49.99, 25),
+            ("Slim Jeans", "Pants", "Stretch denim jeans", 59.99, 30),
+            ("Running Shoes", "Shoes", "Lightweight sneakers", 79.99, 20),
+            ("Baseball Cap", "Accessories", "Adjustable cap", 14.99, 40)
     ]
 
     cursor.executemany("""
     INSERT INTO products
-    (name,size,color,price,stock)
+    (name,category, description, price, stock)
     VALUES (?,?,?,?,?)
     """, products)
 
