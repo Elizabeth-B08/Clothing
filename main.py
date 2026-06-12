@@ -47,14 +47,14 @@ def init_db():
     if cur.fetchone()[0] == 0:
         cur.executemany("""
         INSERT INTO products
-        (name, category, description, price, stock)
+        (name, category, description, color, image_path, price, stock)
         VALUES (?, ?, ?, ?, ?)
         """, [
-            ("Classic T-Shirt", "Shirts", "Soft cotton shirt", 19.99, 50),
-            ("Premium Hoodie", "Outerwear", "Warm fleece hoodie", 49.99, 25),
-            ("Slim Jeans", "Pants", "Stretch denim jeans", 59.99, 30),
-            ("Running Shoes", "Shoes", "Lightweight sneakers", 79.99, 20),
-            ("Baseball Cap", "Accessories", "Adjustable cap", 14.99, 40)
+            ("Classic T-Shirt", "Shirts", "Soft cotton shirt", "blue", 19.99, 50),
+            ("Premium Hoodie", "Outerwear", "Warm fleece hoodie", "black", 49.99, 25),
+            ("Slim Jeans", "Pants", "Stretch denim jeans", "blue", 59.99, 30),
+            ("Running Shoes", "Shoes", "Lightweight sneakers", "white", 79.99, 20),
+            ("Baseball Cap", "Accessories", "Adjustable cap", "red", 14.99, 40)
         ])
 
     conn.commit()
