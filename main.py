@@ -73,6 +73,20 @@ class StyleHub:
         self.root.geometry("1000x700")
         self.root.configure(bg=BG)
 
+        self.wishlist = []
+
+        ttk.Button(
+            self.root,
+            text="Add To Wishlist",
+            command=self.add_to_wishlist
+        ).pack(pady=5)
+
+        ttk.Button(
+            self.root,
+            text="View Wishlist",
+            command=self.view_wishlist
+        ).pack(pady=5)
+
         self.cart = []
 
         self.setup_styles()
@@ -190,6 +204,38 @@ class StyleHub:
                 tk.END,
                 f"{row[0]} | {row[1]} | ${row[2]:.2f}"
             )
+
+    # wishlist
+
+    def add_to_wishlist(self):
+
+        selection = self.listbox.curselection()
+
+        if not selection:
+            return
+
+        item = self.listbox.get(selection[0])
+
+        self.wishlist.append(item)
+
+        messagebox.showinfo(
+            "Wishlist",
+            "Added to wishlist."
+        )
+
+    def view_wishlist(self):
+
+        win = tk.Toplevel(self.root)
+
+        win.title("Wishlist")
+
+        for item in self.wishlist:
+            ttk.Label(
+                win,
+                text=item
+            ).pack(pady=2)
+
+
 
     # -------------------------
     # Add To Cart
