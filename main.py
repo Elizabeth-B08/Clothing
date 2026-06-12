@@ -235,6 +235,40 @@ class StyleHub:
                 text=item
             ).pack(pady=2)
 
+            details_frame = tk.Frame(
+                self.root,
+                bg=CARD
+            )
+
+            details_frame.pack(
+                side="right",
+                fill="both",
+                padx=20
+            )
+
+            self.image_label = tk.Label(
+                details_frame,
+                bg=CARD
+            )
+
+            self.image_label.pack(pady=10)
+
+            self.desc_label = tk.Label(
+                details_frame,
+                text="Select a product",
+                bg=CARD,
+                fg="white",
+                wraplength=250,
+                justify="left"
+            )
+
+            self.desc_label.pack()
+
+            self.listbox.bind(
+                "<<ListboxSelect>>",
+                self.show_product_details
+            )
+
 
 
     # -------------------------
