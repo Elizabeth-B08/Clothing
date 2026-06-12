@@ -16,8 +16,10 @@ cursor.execute("""
 CREATE TABLE IF NOT EXISTS products(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
-    size TEXT,
+    category TEXT,
+    description TEXT,
     color TEXT,
+    image_path TEXT,
     price REAL,
     stock INTEGER
 )

@@ -27,6 +27,8 @@ def init_db():
         name TEXT,
         category TEXT,
         description TEXT,
+        color TEXT,
+        image_path TEXT,
         price REAL,
         stock INTEGER
     )
